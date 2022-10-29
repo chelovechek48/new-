@@ -1,19 +1,19 @@
 const path = require('path');
-const HtmlPlugin = require('html-webpack-plugin');
-const CssPlugin = require('mini-css-extract-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isProd = process.env.NODE_ENV === 'production';
+const isServer = process.env.NODE_ENV === 'server';
 
 const babelOptions = (preset) => {
-  const opts = {
+  const options = {
     presets: isProd ? ['@babel/preset-env'] : [],
   };
-
   if (preset) {
-    opts.presets.push(preset);
+    options.presets.push(preset);
   }
-
-  return opts;
+  return options;
 };
 
 module.exports = {
@@ -25,7 +25,6 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: isProd ? '[name].[contenthash].js' : '[name].js',
     assetModuleFilename: isProd ? '[path][name].[contenthash][ext]' : '[path][name][ext]',
-    clean: true,
   },
   resolve: {
     extensions: ['.js', '.sass', '.scss', '.css'],
@@ -35,18 +34,18 @@ module.exports = {
       '@fonts': path.resolve(__dirname, 'src/assets/fonts'),
     },
   },
-  optimization: {
-    chunkIds: 'named',
-  },
   devServer: {
     hot: false,
   },
   plugins: [
-    new HtmlPlugin({
+    new CleanWebpackPlugin({
+      dry: !!isServer,
+    }),
+    new HtmlWebpackPlugin({
       template: './index.html',
       filename: isProd ? 'index.[contenthash].html' : 'index.html',
     }),
-    new CssPlugin({
+    new MiniCssExtractPlugin({
       filename: isProd ? '[name].[contenthash].css' : '[name].css',
     }),
   ],
@@ -59,23 +58,23 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          CssPlugin.loader,
+          MiniCssExtractPlugin.loader,
           'css-loader',
           'postcss-loader',
         ],
       },
       {
-        test: /\.s[ac]ss$/,
+        test: /\.(sass|scss)$/,
         use: [
-          CssPlugin.loader,
+          MiniCssExtractPlugin.loader,
           'css-loader',
           'postcss-loader',
           'sass-loader',
         ],
       },
       {
-        test: /\.(png|svg|jpg|jpeg|gif|webp)$/,
-        type: 'asset',
+        test: /\.(svg|webp|png|jpg)$/,
+        type: 'asset/resource',
       },
       {
         test: /\.js$/,
