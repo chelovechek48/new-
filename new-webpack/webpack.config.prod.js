@@ -1,30 +1,24 @@
 const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const isProd = process.env.NODE_ENV === 'production';
-const isServer = process.env.NODE_ENV === 'server';
-
-const babelOptions = (preset) => {
-  const options = {
-    presets: isProd ? ['@babel/preset-env'] : [],
-  };
-  if (preset) {
-    options.presets.push(preset);
-  }
-  return options;
-};
+const cssLoaders = [
+  MiniCssExtractPlugin.loader,
+  'css-loader',
+  'postcss-loader',
+];
 
 module.exports = {
+  mode: 'production',
   context: path.resolve(__dirname, 'src'),
   entry: {
     main: './js/index.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: isProd ? '[name].[contenthash].js' : '[name].js',
-    assetModuleFilename: isProd ? '[path][name].[contenthash][ext]' : '[path][name][ext]',
+    filename: '[name].[contenthash].js',
+    assetModuleFilename: '[path][name].[contenthash][ext]',
+    clean: true,
   },
   resolve: {
     extensions: ['.js', '.sass', '.scss', '.css'],
@@ -38,15 +32,12 @@ module.exports = {
     hot: false,
   },
   plugins: [
-    new CleanWebpackPlugin({
-      dry: !!isServer,
-    }),
     new HtmlWebpackPlugin({
       template: './index.html',
-      filename: isProd ? 'index.[contenthash].html' : 'index.html',
+      filename: 'index.[contenthash].html',
     }),
     new MiniCssExtractPlugin({
-      filename: isProd ? '[name].[contenthash].css' : '[name].css',
+      filename: '[name].[contenthash].css',
     }),
   ],
   module: {
@@ -57,23 +48,14 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader',
-        ],
+        use: [...cssLoaders],
       },
       {
         test: /\.(sass|scss)$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader',
-          'sass-loader',
-        ],
+        use: [...cssLoaders, 'sass-loader'],
       },
       {
-        test: /\.(svg|webp|png|jpg)$/,
+        test: /\.(svg|avif|webp|png|jpg)$/,
         type: 'asset/resource',
       },
       {
@@ -81,7 +63,9 @@ module.exports = {
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
-          options: babelOptions(),
+          options: {
+            presets: ['@babel/preset-env'],
+          },
         },
       },
     ],
